@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Blog</title>
+  </head>
+
+  <body>
+    <h1>Welcome to my blog</h1>
+
+    <div class="container">
+      <ul id="postsLst"></ul>
+      <form id="create">
+        <h4>Create Post</h4>
+        <input id="title" type="text" placeholder="Title" />
+        <input id="author" type="text" placeholder="Author" />
+        <textarea id="txtcontent" placeholder="Content"></textarea>
+        <button id="postBtn">Post</button>
+      </form>
+
+      <form>
+        <h4>Delete Post</h4>
+        <input id="deleteID" type="text" placeholder="ID" />
+        <button id="deleteBtn">Delete</button>
+      </form>
+
+      <form>
+        <h4>Edit Post</h4>
+        <input id="editID" type="text" placeholder="ID" />
+        <input id="editTitle" type="text" placehorder="Title" />
+        <input id="editAuthor" type="text" placeholder="Author" />
+        <input id="editContent" type="text" placeholder="Content" />
+        <button id="editBtn">Edit</button>
+      </form>
+    </div>
+    <script src="https://code.jquery.com/jquery-3.4.1.js"></script>
+    <script src="./js/index.js"></script>
+  </body>
+</html>
