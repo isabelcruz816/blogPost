@@ -27,23 +27,24 @@ app.use(express.static("public"));
 app.use(morgan("dev"));
 
 app.get("/blog-posts", jsonParser, (req, res, next) => {
-  return res.status(200).json({posts});
+  return res.status(200).json({success: true, posts});
 });
 
 app.get("/blog-post", jsonParser, (req, res, next) => {
   if (req.query.author) {
     for (let i = 0; i < posts.length; i++) {
       if (posts[i].author === req.query.author) {
-        return res.status(200).json(posts[i]);
+        return res.status(200).json({post: posts[i], success: true});
       }
     }
     return res
       .status(404)
-      .json({error: "Unsuccessful request, Author not found."});
+      .json({success: false, error: "Unsuccessful request, Author not found."});
   } else {
-    return res
-      .status(406)
-      .json({error: "Unsuccessful request, Author not passed."});
+    return res.status(406).json({
+      success: false,
+      error: "Unsuccessful request, Author not passed."
+    });
   }
 });
 
@@ -59,11 +60,11 @@ app.post("/blog-posts", jsonParser, (req, res, next) => {
       publishedDate: publishedDate
     };
     posts.push(post);
-    return res.status(201).json(post);
+    return res.status(201).json({post: post, success: true});
   } else {
     return res
       .status(406)
-      .json({error: "Unsuccessful request, missing fields."});
+      .json({success: false, error: "Unsuccessful request, missing fields."});
   }
 });
 
@@ -76,24 +77,30 @@ app.delete("/blog-posts/:id", (req, res, next) => {
       }
     }
     posts.splice(postIndex, 1);
-    return res.status(200).json({msg: "Deleted successfully"});
+    return res.status(200).json({success: true, msg: "Deleted successfully"});
   } else {
-    return res.status(404).json({error: "Unsuccesful request, ID not found."});
+    return res
+      .status(404)
+      .json({success: false, error: "Unsuccesful request, ID not found."});
   }
 });
 
-app.put("/blog-posts/:id", jsonParser, (req, res, next) => {
+app.put("/blog-posts/:id", jsonParser, async (req, res, next) => {
   const {title, content, author, publishedDate, id} = req.body;
+  console.log(id);
 
   if (!req.params.id || !id) {
-    return res.status(406).json({error: "Unsuccessful request, ID not found."});
+    return res
+      .status(406)
+      .json({success: false, error: "Unsuccessful request, ID not found."});
   }
 
   if (id !== req.params.id) {
     return res
       .status(409)
-      .json({error: "Unsuccessful request, IDs do not match."});
+      .json({success: false, error: "Unsuccessful request, IDs do not match."});
   }
+
   if (title || content || author || publishedDate) {
     let found = false;
     for (let i = 0; i < posts.length; i++) {
@@ -111,13 +118,13 @@ app.put("/blog-posts/:id", jsonParser, (req, res, next) => {
           posts[i].publishedDate = publishedDate;
         }
         found = true;
-        return res.status(200).json({post: posts[i]});
+        return res.status(200).json({success: true, post: posts[i]});
       }
     }
     if (!found) {
       return res
         .status(404)
-        .json({error: "Unsucessful request, Post not found."});
+        .json({success: false, error: "Unsucessful request, Post not found."});
     }
   }
 });
