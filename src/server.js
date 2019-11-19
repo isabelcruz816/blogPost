@@ -2,7 +2,11 @@ const express = require("express");
 const bodyparser = require("body-parser");
 const morgan = require("morgan");
 const uuid = require("uuid");
+const mongoose = require("mongoose");
 const jsonParser = bodyparser.json();
+const Post = require("./Post");
+
+require("dotenv").config();
 
 const app = express();
 
@@ -26,12 +30,14 @@ let posts = [
 app.use(express.static("public"));
 app.use(morgan("dev"));
 
-app.get("/blog-posts", jsonParser, (req, res, next) => {
+app.get("/blog-posts", jsonParser, async (req, res, next) => {
+  const posts = await Post.getAll();
   return res.status(200).json({success: true, posts});
 });
 
-app.get("/blog-post", jsonParser, (req, res, next) => {
-  if (req.query.author) {
+app.get("/blog-post", jsonParser, async (req, res, next) => {
+  const posts = await Post.getByAuthor(request.query.author);
+  if (posts) {
     for (let i = 0; i < posts.length; i++) {
       if (posts[i].author === req.query.author) {
         return res.status(200).json({post: posts[i], success: true});
@@ -48,8 +54,9 @@ app.get("/blog-post", jsonParser, (req, res, next) => {
   }
 });
 
-app.post("/blog-posts", jsonParser, (req, res, next) => {
+app.post("/blog-posts", jsonParser, async (req, res, next) => {
   const {title, content, author, publishedDate} = req.body;
+  const post = await Post.create(title, author, content, publishedDate);
 
   if (title && content && author && publishedDate) {
     const post = {
@@ -129,8 +136,13 @@ app.put("/blog-posts/:id", jsonParser, async (req, res, next) => {
   }
 });
 
-app.listen(3000, () => {
+app.listen(process.env.PORT || 3000, () => {
   console.log("App is running on localhost:3000");
+  mongoose.connect(process.env.MONGO_DB_URI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true
+  });
+  mongoose.connection.once("open", () => {
+    console.log("Connected to mongo");
+  });
 });
-
-//aqui me falta lo de mongoose pero no ce como lol
