@@ -1,7 +1,6 @@
 const express = require("express");
 const bodyparser = require("body-parser");
 const morgan = require("morgan");
-const uuid = require("uuid");
 const mongoose = require("mongoose");
 const jsonParser = bodyparser.json();
 const Post = require("./Post");
@@ -10,36 +9,20 @@ require("dotenv").config();
 
 const app = express();
 
-let posts = [
-  {
-    id: uuid.v4(),
-    title: "Todays post",
-    content: "This is todays post content",
-    author: "Isabel",
-    publishedDate: Date.now()
-  },
-  {
-    id: uuid.v4(),
-    title: "Tomorrows post",
-    content: "This is tomorrows post content",
-    author: "Author",
-    publishedDate: Date.now()
-  }
-];
-
 app.use(express.static("public"));
 app.use(morgan("dev"));
 
 app.get("/blog-posts", jsonParser, async (req, res, next) => {
-  const posts = await Post.getAll();
+  const posts = await Post.find();
   return res.status(200).json({success: true, posts});
 });
 
 app.get("/blog-post", jsonParser, async (req, res, next) => {
-  const posts = await Post.getByAuthor(request.query.author);
+  const author = req.query.author;
+  const posts = await Post.find({author});
   if (posts) {
     for (let i = 0; i < posts.length; i++) {
-      if (posts[i].author === req.query.author) {
+      if (posts[i].author === author) {
         return res.status(200).json({post: posts[i], success: true});
       }
     }
@@ -56,17 +39,9 @@ app.get("/blog-post", jsonParser, async (req, res, next) => {
 
 app.post("/blog-posts", jsonParser, async (req, res, next) => {
   const {title, content, author, publishedDate} = req.body;
-  const post = await Post.create(title, author, content, publishedDate);
 
   if (title && content && author && publishedDate) {
-    const post = {
-      id: uuid.v4(),
-      title: title,
-      author: author,
-      content: content,
-      publishedDate: publishedDate
-    };
-    posts.push(post);
+    const post = await Post.create({title, author, content, publishedDate});
     return res.status(201).json({post: post, success: true});
   } else {
     return res
@@ -75,15 +50,11 @@ app.post("/blog-posts", jsonParser, async (req, res, next) => {
   }
 });
 
-app.delete("/blog-posts/:id", (req, res, next) => {
-  let postIndex = 0;
-  if (req.params.id) {
-    for (let i = 0; i < posts.length; i++) {
-      if (posts[i].id === req.params.id) {
-        postIndex = i;
-      }
-    }
-    posts.splice(postIndex, 1);
+app.delete("/blog-posts/:id", async (req, res, next) => {
+  const id = req.params.id;
+  const post = await Post.findById(id);
+  if (post) {
+    await Post.findByIdAndDelete(id);
     return res.status(200).json({success: true, msg: "Deleted successfully"});
   } else {
     return res
@@ -94,45 +65,37 @@ app.delete("/blog-posts/:id", (req, res, next) => {
 
 app.put("/blog-posts/:id", jsonParser, async (req, res, next) => {
   const {title, content, author, publishedDate, id} = req.body;
-  console.log(id);
+  const post = await Post.findById(req.params.id);
+  console.log(post);
 
-  if (!req.params.id || !id) {
+  if (!post) {
     return res
       .status(406)
       .json({success: false, error: "Unsuccessful request, ID not found."});
   }
 
-  if (id !== req.params.id) {
+  if (post.id !== req.params.id) {
     return res
       .status(409)
       .json({success: false, error: "Unsuccessful request, IDs do not match."});
   }
 
   if (title || content || author || publishedDate) {
-    let found = false;
-    for (let i = 0; i < posts.length; i++) {
-      if (posts[i].id === req.params.id) {
-        if (title) {
-          posts[i].title = title;
-        }
-        if (content) {
-          posts[i].content = content;
-        }
-        if (author) {
-          posts[i].author = author;
-        }
-        if (publishedDate) {
-          posts[i].publishedDate = publishedDate;
-        }
-        found = true;
-        return res.status(200).json({success: true, post: posts[i]});
-      }
+    let Obj = {};
+    if (title) {
+      Obj.title = title;
     }
-    if (!found) {
-      return res
-        .status(404)
-        .json({success: false, error: "Unsucessful request, Post not found."});
+    if (content) {
+      Obj.content = content;
     }
+    if (author) {
+      Obj.author = author;
+    }
+    if (publishedDate) {
+      Obj.publishedDate = publishedDate;
+    }
+    await Post.updateOne({_id: post._id}, Obj, {new: true});
+    return res.status(200).json({success: true, post: post});
   }
 });
 
