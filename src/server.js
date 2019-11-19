@@ -132,3 +132,5 @@ app.put("/blog-posts/:id", jsonParser, async (req, res, next) => {
 app.listen(3000, () => {
   console.log("App is running on localhost:3000");
 });
+
+//aqui me falta lo de mongoose pero no ce como lol
